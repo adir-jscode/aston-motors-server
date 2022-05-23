@@ -1,7 +1,7 @@
 const express = require("express");
 const app = express();
 require("dotenv").config();
-const { MongoClient, ServerApiVersion } = require("mongodb");
+const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 const cors = require("cors");
 const port = process.env.PORT || 5000;
 
@@ -20,6 +20,38 @@ async function run() {
   try {
     await client.connect();
     console.log("connected to aston database");
+
+    const partsCollection = await client.db("aston-motors").collection("parts");
+    const purchaseCollection = await client
+      .db("aston-motors")
+      .collection("purchase");
+
+    /* PARTS COLLECTION */
+
+    //get all parts
+
+    app.get("/part", async (req, res) => {
+      const result = await partsCollection.find().toArray();
+      res.send(result);
+    });
+
+    //get specific parts details
+
+    app.get("/part/:id", async (req, res) => {
+      const id = req.params.id;
+      const filter = { _id: ObjectId(id) };
+      const result = await partsCollection.findOne(filter);
+      res.send(result);
+    });
+
+    /* Confirm Purchase Collection*/
+    // add purchase
+
+    app.post("/purchase", async (req, res) => {
+      const data = req.body;
+      const result = await purchaseCollection.insertOne(data);
+      res.send(result);
+    });
   } finally {
     //await client.close();
   }
