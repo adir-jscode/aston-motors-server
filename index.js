@@ -45,11 +45,21 @@ async function run() {
     });
 
     /* Confirm Purchase Collection*/
+
     // add purchase
 
     app.post("/purchase", async (req, res) => {
       const data = req.body;
       const result = await purchaseCollection.insertOne(data);
+      res.send(result);
+    });
+
+    //get specific Confirmed purchase by user email
+
+    app.get("/purchase", async (req, res) => {
+      const email = req.query.email;
+      const query = { email: email };
+      const result = await purchaseCollection.find(query).toArray();
       res.send(result);
     });
   } finally {
