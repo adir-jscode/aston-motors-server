@@ -4,6 +4,8 @@ require("dotenv").config();
 const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 var jwt = require("jsonwebtoken");
 const cors = require("cors");
+const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
+
 const port = process.env.PORT || 5000;
 
 //middleware
@@ -71,7 +73,7 @@ async function run() {
 
     //get all parts
 
-    app.get("/part", verifyJWT, async (req, res) => {
+    app.get("/part", async (req, res) => {
       const result = await partsCollection.find().toArray();
       res.send(result);
     });
@@ -120,7 +122,16 @@ async function run() {
       }
     });
 
-    //get all purchase or order collection
+    //get users purchase collection for payment
+
+    app.get("/purchase/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: ObjectId(id) };
+      const result = await purchaseCollection.findOne(query);
+      res.send(result);
+    });
+
+    //get all purchase or order collection for admin
 
     app.get("/order", verifyJWT, async (req, res) => {
       const result = await purchaseCollection.find().toArray();
@@ -209,6 +220,27 @@ async function run() {
     app.get("/review", async (req, res) => {
       const result = await reviewCollection.find().toArray();
       res.send(result);
+    });
+
+    /*
+    PAYMENT 
+    */
+
+    app.post("/create-payment-intent", async (req, res) => {
+      const service = req.body;
+      const price = service.price;
+      const amount = price * 100;
+
+      // Create a PaymentIntent with the order amount and currency
+      const paymentIntent = await stripe.paymentIntents.create({
+        amount: amount,
+        currency: "usd",
+        payment_method_types: ["card"],
+      });
+
+      res.send({
+        clientSecret: paymentIntent.client_secret,
+      });
     });
   } finally {
     //await client.close();
