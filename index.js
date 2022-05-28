@@ -48,6 +48,9 @@ async function run() {
     const reviewCollection = await client
       .db("aston-motors")
       .collection("reviews");
+    const profileCollection = await client
+      .db("aston-motors")
+      .collection("profile");
 
     const verifyAdmin = async (req, res, next) => {
       const requester = req.decoded.email;
@@ -226,21 +229,45 @@ async function run() {
     PAYMENT 
     */
 
-    app.post("/create-payment-intent", async (req, res) => {
+    app.post("/create-payment-intent", verifyJWT, async (req, res) => {
       const service = req.body;
       const price = service.price;
       const amount = price * 100;
-
-      // Create a PaymentIntent with the order amount and currency
       const paymentIntent = await stripe.paymentIntents.create({
         amount: amount,
         currency: "usd",
         payment_method_types: ["card"],
       });
+      console.log(paymentIntent.client_secret);
+      res.send({ clientSecret: paymentIntent.client_secret });
+    });
 
-      res.send({
-        clientSecret: paymentIntent.client_secret,
-      });
+    /*MY PROFILE
+    
+    */
+    //add or update information
+    app.put("/profile/:email", async (req, res) => {
+      const email = req.params.email;
+      const userInfo = req.body;
+      const filter = { email: email };
+      const options = { upsert: true };
+      const updateDoc = {
+        $set: userInfo,
+      };
+      const result = await profileCollection.updateOne(
+        filter,
+        updateDoc,
+        options
+      );
+      res.send(result);
+    });
+
+    //get all data from
+    app.get("/profile", async (req, res) => {
+      const email = req.query.email;
+      const filter = { email: email };
+      const result = await profileCollection.findOne(filter);
+      res.send(result);
     });
   } finally {
     //await client.close();
