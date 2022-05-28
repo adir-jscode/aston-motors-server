@@ -252,7 +252,9 @@ async function run() {
       const filter = { email: email };
       const options = { upsert: true };
       const updateDoc = {
-        $set: userInfo,
+        $set: {
+          userInfo,
+        },
       };
       const result = await profileCollection.updateOne(
         filter,
@@ -265,9 +267,11 @@ async function run() {
     //get all data from
     app.get("/profile", async (req, res) => {
       const email = req.query.email;
+      console.log(email);
       const filter = { email: email };
       const result = await profileCollection.findOne(filter);
-      res.send(result);
+      console.log(result);
+      res.send({ result });
     });
   } finally {
     //await client.close();
