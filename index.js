@@ -280,7 +280,7 @@ async function run() {
 run().catch(console.dir);
 
 app.get("/", (req, res) => {
-  res.send("Hello from aston!");
+  res.send("Hello from aston motors!");
 });
 
 app.listen(port, () => {
